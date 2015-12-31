@@ -2,17 +2,27 @@
 
 sudo -i
 
-apt-get -y --force-yes install build-essential python-software-properties curl 
+timedatectl set-timezone UTC
+
+apt-get -y --force-yes install build-essential python-software-properties ntp curl git nfs-common portmap openvpn
+
+# Fixing HGFS issue on reboot
+echo "answer AUTO_KMODS_ENABLED yes" | tee -a /etc/vmware-tools/locations
+
+# Sync date and then make sure HTP protocol sync up happens every minute via HTP
+ntpdate -u pool.ntp.org
+(crontab -l ; echo "* * * * * date -s \"\$(curl -L 'http://www.timeapi.org/utc/now?\a%20\b%20\d%20\H:\M:\S%20\Z%20\Y')\"") | crontab -
 
 # Setup Chrome
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 
-echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+# Get Chrome
+echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list
 
 apt-get update
 apt-get -y upgrade
 
-apt-get -y --force-yes iptables-persistent xfce4 google-chrome-stable tor-geoipdb torsocks tor
+apt-get -y --force-yes install iptables-persistent xfce4 google-chrome-stable tor-geoipdb torsocks tor
 
 # Setup X11
 echo "allowed_users=anybody" > /etc/X11/Xwrapper.config
@@ -21,7 +31,11 @@ echo "X11UseLocalhost yes" >> /etc/ssh/sshd_config
 echo "   ForwardX11 yes" >> /etc/ssh/ssh_config
 
 
-# Setup TOR
+# Setup openvpn
+
+echo 'AUTOSTART="tor"'
+
+# Setup tor
 echo "ControlPort 9051" > /etc/tor/torrc
 echo "CookieAuthentication 0" >> /etc/tor/torrc
 echo "VirtualAddrNetwork 10.192.0.0/10" >> /etc/tor/torrc
@@ -58,4 +72,3 @@ iptables -A OUTPUT -j REJECT
 service iptables-persistent save
 service tor restart
 service ssh restart
-

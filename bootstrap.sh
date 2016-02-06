@@ -9,9 +9,9 @@ apt-get -y --force-yes install build-essential python-software-properties ntp cu
 # Fixing HGFS issue on reboot
 echo "answer AUTO_KMODS_ENABLED yes" | tee -a /etc/vmware-tools/locations
 
-# Sync date and then make sure HTP protocol sync up happens every minute via HTP
+# Sync date and then make sure HTP protocol sync up happens every 5 minutes via HTP
 ntpdate -u pool.ntp.org
-(crontab -l ; echo "* * * * * date -s \"\$(curl -L 'http://www.timeapi.org/utc/now?\a%20\b%20\d%20\H:\M:\S%20\Z%20\Y')\"") | crontab -
+(crontab -l ; echo "*/5 * * * * date -s \"\$(curl -L 'http://www.timeapi.org/utc/now?\a%20\b%20\d%20\H:\M:\S%20\Z%20\Y')\"") | crontab -
 
 # Setup Chrome
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
@@ -55,6 +55,8 @@ TRANS_PORT="9040"
 iptables -F
 iptables -t nat -F
 
+date -s "$(curl -L 'http://www.timeapi.org/utc/now?\a%20\b%20\d%20\H:\M:\S%20\Z%20\Y')"
+
 iptables -t nat -A OUTPUT -m owner --uid-owner $TOR_UID -j RETURN
 iptables -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-ports 53
 for NET in $NON_TOR 127.0.0.0/8 127.128.0.0/10; do
@@ -71,4 +73,15 @@ iptables -A OUTPUT -j REJECT
 
 service iptables-persistent save
 service tor restart
+
 service ssh restart
+
+# Sort out Dropbox
+apt-get install python-cairo python-gobject-2 libxml2-dev libxslt1-dev python-dev python-gtk2
+apt-get install -f
+wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xzf -
+./.dropbox-dist/dropboxd
+
+# Install Keybase
+curl -O https://dist.keybase.io/linux/deb/keybase-latest-amd64.deb \
+&& dpkg -i keybase-latest-amd64.deb

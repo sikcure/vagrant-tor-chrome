@@ -14,6 +14,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provision :shell, :path => "./bootstrap.sh"
 
     config.vm.provider :vmware_fusion do |vb|
-      vb.customize [ "modifyvm", :id, "--memory", 1024, "--cpus", 1, "--vram", 16, "--natdnshostresolver1", "on"]
+      vb.customize [ "modifyvm", :id, "--memory", 4128, "--cpus", 2, "--vram", 16, "--natdnshostresolver1", "on"]
     end
 end
